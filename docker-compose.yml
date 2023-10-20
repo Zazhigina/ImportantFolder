@@ -1,0 +1,37 @@
+version: '3.1'
+services:
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq_data
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
+
+  dispatcher-service:
+    build: ./dispatcher
+    image: dispatcher
+    container_name: dispatcher
+    ports:
+      - "8081:8081"
+      - "8084:8084"
+    depends_on:
+      - rabbitmq
+    environment:
+      - BOT.NAME=important_folder_bot
+      - BOT.TOKEN=6380972063:AAFsTra_hWS_VdM4ndLPZhwXOvTLzRBEWYs
+
+  node-service:
+    build: ./node
+    image: node
+    container_name: node
+    ports:
+      - "8085:8085"
+      - "9091:9091"
+    depends_on:
+      - rabbitmq
