@@ -8,7 +8,7 @@ services:
       - "5672:5672"
       - "15672:15672"
     volumes:
-      - ./rabbitmq:/var/lib/rabbitmq_data
+      - ./rabbitmq_data:/var/lib/rabbitmq_data
     restart: unless-stopped
     environment:
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
@@ -18,13 +18,18 @@ services:
     image: dispatcher
     container_name: dispatcher
     ports:
-      - "8081:8081"
       - "8084:8084"
+      - "8081:8081"
     depends_on:
       - rabbitmq
+      - folder-db
     environment:
       - BOT.NAME=important_folder_bot
       - BOT.TOKEN=6380972063:AAFsTra_hWS_VdM4ndLPZhwXOvTLzRBEWYs
+      - SPRING.RABBITMQ.HOST=localhost
+      - SPRING.RABBITMQ.PORT=5672
+      - SPRING.RABBITMQ.USERNAME=userok
+      - SPRING.RABBITMQ.PASSWORD=p@ssw0rd
 
   node-service:
     build: ./node
@@ -35,3 +40,40 @@ services:
       - "9091:9091"
     depends_on:
       - rabbitmq
+      - folder-db
+    environment:
+      - SPRING.RABBITMQ.HOST=localhost
+      - SPRING.RABBITMQ.PORT=5672
+      - SPRING.RABBITMQ.USERNAME=userok
+      - SPRING.RABBITMQ.PASSWORD=p@ssw0rd
+
+  commom-rabbitnq:
+    build: ./dispatcher
+    image: dispatcher
+    container_name: dispatcher
+    ports:
+      - "8084:8084"
+      - "8081:8081"
+    depends_on:
+      - rabbitmq
+    environment:
+      - BOT.NAME=important_folder_bot
+      - BOT.TOKEN=6380972063:AAFsTra_hWS_VdM4ndLPZhwXOvTLzRBEWYs
+      - SPRING.RABBITMQ.HOST=localhost
+      - SPRING.RABBITMQ.PORT=5672
+      - SPRING.RABBITMQ.USERNAME=userok
+      - SPRING.RABBITMQ.PASSWORD=p@ssw0rd
+
+  folder-db:
+    image: postgres:14-alpine
+    container_name: folder
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=folder
+      - POSTGRES_USER=userok
+      - POSTGRES_PASSWORD=p@ssw0rd
+    volumes:
+      - ./postgres_data:/var/lib/postgres_data
+    restart: unless-stopped
+
